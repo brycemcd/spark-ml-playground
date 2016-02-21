@@ -1,6 +1,7 @@
 package spark_ml_playground
 
 import spark_ml_playground.AcuteInflammation
+import spark_ml_playground.KDD
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -42,7 +43,7 @@ object Main {
     val sc = new SparkSetup(host).sc
     sc.setLogLevel("ERROR")
 
-    AcuteInflammation.trainTestAndEval(sc)
+    KDD.trainTestAndEval(sc)
 
     sc.stop()
   }
