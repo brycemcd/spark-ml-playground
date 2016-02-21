@@ -1,10 +1,7 @@
 package spark_ml_playground
 
-import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
-
-import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, LogisticRegressionModel}
+import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, LogisticRegressionModel, LogisticRegressionWithSGD}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.mllib.linalg.Vectors
@@ -14,30 +11,7 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
-class SparkSetup {
-  // NOTE: change this to use the cluster later
-  val conf = new SparkConf()
-  .setAppName("classificationTest")
-  .setMaster("local[6]")
-  //.set("spark.executor.memory", "30g")
-  //.set("spark.executor-memory", "30g")
-  //.set("spark.driver.memory", "30g")
-  //.set("spark.driver-memory", "30g")
-  //.set("spark.storage.memoryFraction", "0.9999")
-  //.set("spark.eventLog.enabled", "true")
-  //.set("spark.eventLog.dir", "/home/brycemcd/Downloads")
-
-  def sc = {
-    // FIXME: is this the only way to shut the logger up?
-    val s = new SparkContext(conf)
-    Logger.getRootLogger().setLevel(Level.ERROR)
-    s
-  }
-}
-
 object AcuteInflammation {
-
-  val sc = new SparkSetup().sc
 
   def matchYesNo(vari: String) : Int = vari match {
     case "yes" => 1
@@ -58,20 +32,17 @@ object AcuteInflammation {
       val vec = Vectors.dense(patientTemp,
                               patientNausea,
                               patientLumbarPain,
-                              patientUrinePushing
-
+                              patientUrinePushing,
+                              patientMicturitionPain,
+                              patientBurning
                             )
       LabeledPoint(outcomeNephritis, vec)
   }
 
-  // https://archive.ics.uci.edu/ml/machine-learning-databases/acute/
-  val diagnosisData = sc.textFile("hdfs://spark3.thedevranch.net/classifications-datasets/diagnosis.data.unix")
-
-  val nephritis = diagnosisData.map(row => nephritisPoint(row) )
-
   def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint]) : LogisticRegressionModel = {
     new LogisticRegressionWithLBFGS()
       .setNumClasses(2)
+    //new LogisticRegressionWithSGD()
       .run(trainingData)
   }
 
@@ -93,15 +64,22 @@ object AcuteInflammation {
     }
 
     println("[Model Perf] AUC: " + metrics.areaUnderROC)
+    println("[Model Perf] Confusion Matrix: ")
+
+    val multMetrics = new MulticlassMetrics(predictionAndLabels)
+    println(multMetrics.confusionMatrix)
     metrics
   }
 
-  def trainTestAndEval = {
+  def trainTestAndEval(sc : SparkContext) = {
 
     // NOTE: dataset is @ https://archive.ics.uci.edu/ml/datasets/URL+Reputation
     //val data = MLUtils.loadLibSVMFile(sc, "hdfs://spark3.thedevranch.net/classifications-datasets/diagnosis.data")
 
-    val splits = nephritis.randomSplit(Array(0.8, 0.2), seed = 11L)
+    // https://archive.ics.uci.edu/ml/machine-learning-databases/acute/
+    val diagnosisData = sc.textFile("hdfs://spark3.thedevranch.net/classifications-datasets/diagnosis.data.unix")
+    val nephritis = diagnosisData.map(row => nephritisPoint(row) )
+    val splits = nephritis.randomSplit(Array(0.8, 0.2))
     val training = splits(0)//.cache()
     val test = splits(1) //.cache()
 
@@ -116,16 +94,13 @@ object AcuteInflammation {
 
 
     println("===== PREDICT =====")
+    println("weights: " + model.weights)
     val predictionAndLabels = predict(model, test)
 
     // output some cases to see how well we did
-    predictionAndLabels.take(5).foreach(println)
+    //predictionAndLabels.take(5).foreach(println)
 
     println("===== MODEL PERF =====")
     modelPerformance(predictionAndLabels)
-
-
-    // NOTE: put this somewhere better
-    sc.stop()
   }
 }
