@@ -7,54 +7,13 @@ import org.apache.spark.sql.Row
 
 import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
 
-import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, LogisticRegressionModel, LogisticRegressionWithSGD}
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.util.MLUtils
 
-import org.apache.log4j.Logger
-import org.apache.log4j.Level
 
 object KDD {
 
-  def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint]) : LogisticRegressionModel = {
-    //new LogisticRegressionWithLBFGS()
-      //.setNumClasses(2)
-    new LogisticRegressionWithSGD()
-      .run(trainingData)
-  }
-
-  def predict(model : LogisticRegressionModel,
-    data : org.apache.spark.rdd.RDD[LabeledPoint]) = {
-
-    data.map { case LabeledPoint(label, features) =>
-      val prediction = model.predict(features)
-      (prediction, label)
-    }
-  }
-
-  def modelPerformance(predictionAndLabels: org.apache.spark.rdd.RDD[(Double, Double)]) = {
-    val metrics = new BinaryClassificationMetrics(predictionAndLabels)
-
-    val precision = metrics.precisionByThreshold
-    precision.foreach { case (t, p) =>
-      println(s"Threshold: $t, Precision: $p")
-    }
-
-    println("[Model Perf] AUC: " + metrics.areaUnderROC)
-    println("[Model Perf] Confusion Matrix: ")
-
-    val multMetrics = new MulticlassMetrics(predictionAndLabels)
-    println(multMetrics.confusionMatrix)
-    multMetrics.labels.foreach(label =>
-      println(s"[Model Perf] $label precision:  ${multMetrics.precision(label)}"))
-    println(s"[Model Perf] weighted precision: ${multMetrics.weightedPrecision}")
-    metrics
-  }
-
-  def trainTestAndEval(sc : SparkContext) = {
+  def prepareData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)
     val df = sqlContext.read
       .format("com.databricks.spark.csv")
@@ -62,7 +21,6 @@ object KDD {
       .load("hdfs://spark3.thedevranch.net/classifications-datasets/kddcup.data_10_percent")
       //.load("hdfs://spark3.thedevranch.net/classifications-datasets/kddcup.data")
 
-      //.fit(df, ("C1" -> "transportProtoIndex"), ("C2" -> "protoIndex"))
     val mappers: List[(String, String)] = List(
       "C1" -> "transportProtoIndex",
       "C2" -> "protoIndex",
@@ -127,22 +85,8 @@ object KDD {
    //modelData.show()
 
    //NOTE: if the select statement from creating this df changes, update `rowToLabeledPoint`
-   val splits = modelData
+    modelData
      .map(row => transformRowToLabeledPoint(row) )
-     .randomSplit(Array(0.8, 0.2), seed = 11L)
-   val training = splits(0).cache()
-   val test = splits(1)
-
-    println("===== TRAINING =====")
-    println("data set count: " + training.count)
-    val model = train(training)
-
-    println("===== PREDICT =====")
-    println("weights: " + model.weights)
-    val predictionAndLabels = predict(model, test)
-
-    println("===== MODEL PERF =====")
-    modelPerformance(predictionAndLabels)
   }
 
   def transformRowToLabeledPoint(row: Row) = LabeledPoint(row.getDouble(0),
