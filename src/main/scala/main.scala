@@ -1,9 +1,5 @@
 package spark_ml_playground
 
-//import spark_ml_playground.AcuteInflammation
-//import spark_ml_playground.KDD
-//import spark_ml_playground.LogisticRegression
-
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
@@ -13,7 +9,6 @@ import org.apache.log4j.Level
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
-//import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
@@ -65,16 +60,16 @@ object Main {
     println("===== TRAINING =====")
     println("data set count: " + training.count)
     //val model = LogisticRegression.train(training, 2)
-    val model = SVM.train(training, 100)
+    val model = SVM.train(training, SVMModelParams(1.0, 100))
 
-    println("===== PREDICT =====")
+    println("===== Evaluation =====")
     println("weights: " + model.weights)
     //val predictionAndLabels = LogisticRegression.predict(model, test)
-    val predictionAndLabels = SVM.predict(model, test)
+    val evaluation = SVM.evaluateModel(model, test)
 
     println("===== MODEL PERF =====")
     //LogisticRegression.modelPerformance(predictionAndLabels)
-    modelPerformance(predictionAndLabels)
+    modelPerformance(evaluation)
 
     sc.stop()
   }
@@ -96,8 +91,11 @@ object Main {
 
     println("===== Explore Mode =====")
     // NOTE - taking away this count makes the model take MUCH longer
-    println("data set count: " + training.count)
-    SVM.exploreTraining(training, test)
+    //println("data set count: " + training.count)
+    val perfSummary = SVM.exploreTraining(training, test)
+    println("=== Worst Mdoel: " + perfSummary.worstModel)
+    println("=== Best Model: "  + perfSummary.bestModel)
+    println("=== Best Model Param: "  + perfSummary.bestModelParam)
 
     sc.stop()
 

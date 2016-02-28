@@ -4,17 +4,24 @@ import org.apache.spark.mllib.optimization.L1Updater
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
 import org.apache.spark.mllib.regression.LabeledPoint
 
-case class Perf(regParam: BigDecimal, numIterations: Int, wRecall: Double, wPrecision: Double)
+case class Perf(modelParams: SVMModelParams, wRecall: Double, wPrecision: Double)
 
-class PerformanceSummary() {
-  var perfSummaries = List[Perf]()
+case class SVMModelParams( regParam: Double,
+                           numIterations: Int) {
 
-  def addSummary(perf: Perf) = perfSummaries = perfSummaries :+ perf
+  override def toString = "regularization value: " + regParam + " num. iterations " + numIterations
+}
+
+class PerformanceSummary(perfSummaries: Seq[Perf]) {
 
   def sortSummaries = (perfSummaries sortBy (_.wPrecision))
 
-  def bestModel = sortSummaries.last
-  def worstModel = sortSummaries.head
+  def bestModel = modelPerfToString(sortSummaries.last)
+  def worstModel = modelPerfToString(sortSummaries.head)
+
+  def bestModelParam = sortSummaries.last.modelParams
+
+  private def modelPerfToString(perf: Perf) =  perf.modelParams.toString + " resulted in weighted recall " + perf.wRecall + " and weighted Precision " + perf.wPrecision
 
   def printSummary = {
     sortSummaries.foreach{ x =>
@@ -25,46 +32,48 @@ class PerformanceSummary() {
 
 object SVM {
 
-  def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint], numIterations: Int) : SVMModel = {
-    val model = buildModel(10, BigDecimal(1.0))
+  def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint], modelParams: SVMModelParams) : SVMModel = {
+    // FIXME: apply the modelParams to the build model call
+    val model = buildModel( modelParams )
     model.run(trainingData)
   }
 
+  private def generateModelParams = {
+    for(regParam <- (0.1 to 3.0 by 0.5);
+      numIterations <- (10 to 20 by 10) ) yield SVMModelParams(regParam, numIterations)
+
+  }
   def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) = {
+                      testData: org.apache.spark.rdd.RDD[LabeledPoint]): PerformanceSummary = {
 
-    var perfSummary =  new PerformanceSummary()
+    // FIXME: this `count` op reduces the time this method executes from
+    // > 7 minutes to ~30 s
+    trainingData.count
 
-    for(regParam <- (BigDecimal(0.1) to BigDecimal(3.0) by 0.5);
-        numIterations <- (10 to 20 by 10) ) {
+    val modelIters = generateModelParams.map { modelParam =>
 
-
-      val model = buildModel(numIterations, regParam)
+      val model = buildModel( modelParam )
         .run(trainingData)
 
-      val pred = SVM.predict(model, testData)
+      val pred = SVM.evaluateModel(model, testData)
       val metrics = Main.modelPerformance(pred)
 
-      perfSummary.addSummary(
-        Perf(regParam, numIterations, metrics.weightedRecall, metrics.weightedPrecision)
-      )
+      Perf(modelParam, metrics.weightedRecall, metrics.weightedPrecision)
     }
-
-    println("=== Worst Mdoel: " + perfSummary.worstModel)
-    println("=== Best Mdoel: " + perfSummary.bestModel)
+    new PerformanceSummary(modelIters)
   }
 
-  private def buildModel(numInterations: Int, regParam: BigDecimal) = {
+  private def buildModel(modelParams: SVMModelParams) = {
       //setUpdater(new L1Updater)
     val model = new SVMWithSGD()
       model.optimizer.
-      setNumIterations(numInterations).
-      setRegParam(0.1)
+      setNumIterations(modelParams.numIterations).
+      setRegParam(modelParams.regParam)
     model
   }
 
-  def predict(model : SVMModel,
-              data : org.apache.spark.rdd.RDD[LabeledPoint]) = {
+  def evaluateModel(model : SVMModel,
+                    data : org.apache.spark.rdd.RDD[LabeledPoint]) = {
 
               // Clear the default threshold.
               // model.clearThreshold()
