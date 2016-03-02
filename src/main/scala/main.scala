@@ -69,7 +69,7 @@ object Main {
 
     println("===== MODEL PERF =====")
     //LogisticRegression.modelPerformance(predictionAndLabels)
-    modelPerformance(evaluation)
+    //modelPerformance(evaluation)
 
     sc.stop()
   }
@@ -93,9 +93,9 @@ object Main {
     // NOTE - taking away this count makes the model take MUCH longer
     //println("data set count: " + training.count)
     val perfSummary = SVM.exploreTraining(training, test)
-    println("=== Worst Mdoel: " + perfSummary.worstModel)
-    println("=== Best Model: "  + perfSummary.bestModel)
-    println("=== Best Model Param: "  + perfSummary.bestModelParam)
+    //println("=== Worst Mdoel: " + perfSummary.worstModel)
+    //println("=== Best Model: "  + perfSummary.bestModel)
+    //println("=== Best Model Param: "  + perfSummary.bestModelParam)
 
     sc.stop()
 
