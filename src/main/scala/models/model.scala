@@ -13,7 +13,7 @@ abstract class ModelParams
 /*
 * M = Linear model generalization 
 */
-abstract class Model[
+trait Model[
   M <: GeneralizedLinearModel,
   P <: ModelParams
   ] {
@@ -22,27 +22,12 @@ abstract class Model[
   def evaluateModel(model : M,
                     data : org.apache.spark.rdd.RDD[LabeledPoint]) : MulticlassMetrics
 
+  //def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
+                      //testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[P]]
   def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint])
+                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[P]]
+
   // TODO: add predict method
 }
 
 case class Perf[P <: ModelParams](modelParams : P, wRecall: Double, wPrecision: Double)
-
-//trait PerformanceSummary(perfSummaries: Seq[Perf[Any]]) {
-
-  //def sortSummaries = (perfSummaries sortBy (_.wPrecision))
-
-  //def bestModel = modelPerfToString(sortSummaries.last)
-  //def worstModel = modelPerfToString(sortSummaries.head)
-
-  //def bestModelParam = sortSummaries.last.modelParams
-
-  //private def modelPerfToString(perf: Perf[Any]) =  perf.modelParams.toString + " resulted in weighted recall " + perf.wRecall + " and weighted Precision " + perf.wPrecision
-
-  //def printSummary = {
-    //sortSummaries.foreach{ x =>
-      //println(x)
-    //}
-  //}
-//}

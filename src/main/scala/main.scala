@@ -90,12 +90,14 @@ object Main {
     val test = splits(1).cache()
 
     println("===== Explore Mode =====")
-    // NOTE - taking away this count makes the model take MUCH longer
-    //println("data set count: " + training.count)
-    val perfSummary = SVM.exploreTraining(training, test)
-    //println("=== Worst Mdoel: " + perfSummary.worstModel)
-    //println("=== Best Model: "  + perfSummary.bestModel)
-    //println("=== Best Model Param: "  + perfSummary.bestModelParam)
+
+    //val svmSummary = SVM.exploreTraining(training, test) sortBy (_.wPrecision)
+    //println("=== Worst Model: " + svmSummary.head)
+    //println("=== Best Model: "  + svmSummary.last)
+
+    val logSummary = LogisticRegression.exploreTraining(training, test) sortBy (_.wPrecision)
+    println("=== Worst Model: " + logSummary.head)
+    println("=== Best Model: "  + logSummary.last)
 
     sc.stop()
 

@@ -25,19 +25,19 @@ object SVM extends Model[
   }
 
   private def generateModelParams : Seq[SVMModelParams] = {
-    for(regParam <- (0.1 to 3.0 by 0.5);
+    for(regParam <- (0.1 to 0.5 by 0.5);
       numIterations <- (10 to 20 by 10) ) yield SVMModelParams(regParam, numIterations)
 
   }
 
   def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) = {
+                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[SVMModelParams]] = {
 
     // FIXME: this `count` op reduces the time this method executes from
     // > 7 minutes to ~30 s
     trainingData.count
 
-    val modelIters = generateModelParams.map { modelParam =>
+    generateModelParams.map { modelParam =>
 
       val model = buildModel( modelParam )
         .run(trainingData)
@@ -46,8 +46,8 @@ object SVM extends Model[
 
       Perf(modelParam, metrics.weightedRecall, metrics.weightedPrecision)
     }
-    //new PerformanceSummary(modelIters)
   }
+
 
   private def buildModel(modelParams: SVMModelParams) = {
       //setUpdater(new L1Updater)

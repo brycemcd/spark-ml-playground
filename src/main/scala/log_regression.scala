@@ -10,44 +10,51 @@ case class LRModelParams(numClasses: Int) extends ModelParams
 
 object LogisticRegression extends Model[
   LogisticRegressionModel,
-  LRModelParams
+  SVMModelParams
 ] {
 
   def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-            modelParams : LRModelParams) : LogisticRegressionModel = {
+            modelParams : SVMModelParams) : LogisticRegressionModel = {
     //new LogisticRegressionWithSGD()
     buildModel(modelParams)
       .run(trainingData)
   }
 
-  private def buildModel(modelParams: LRModelParams) = {
-
-    //new LogisticRegressionWithSGD()
-    new LogisticRegressionWithLBFGS()
-      .setNumClasses(modelParams.numClasses)
+  private def buildModel(modelParams: SVMModelParams) = {
+    //val model = new LogisticRegressionWithLBFGS()
+    //model.setNumClasses(modelParams.numClasses)
+    var model = new LogisticRegressionWithSGD()
+      model.optimizer.
+      setNumIterations(modelParams.numIterations).
+      setRegParam(modelParams.regParam)
+    model
   }
 
-  private def generateModelParams : Seq[LRModelParams] = {
-    for(numClasses <- (0 to 2)) yield LRModelParams(numClasses)
+  private def generateModelParamsOLD : Seq[LRModelParams] = {
+    for(numClasses <- (2 to 2)) yield LRModelParams(numClasses)
+  }
+
+  private def generateModelParams : Seq[SVMModelParams] = {
+    for(regParam <- (0.00001 to 0.0001 by 0.00005);
+      numIterations <- (100 to 500 by 100) ) yield SVMModelParams(regParam, numIterations)
   }
 
   def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) = {
+                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[SVMModelParams]] = {
 
     // FIXME: this `count` op reduces the time this method executes from
     // > 7 minutes to ~30 s
     trainingData.count
 
-    val modelIters = generateModelParams.map { modelParam =>
+    generateModelParams.map { modelParam =>
 
       val model = buildModel( modelParam )
         .run(trainingData)
 
       val metrics = this.evaluateModel(model, testData)
 
-      Perf[LRModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
+      Perf[SVMModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
     }
-    //new PerformanceSummary(modelIters)
   }
 
   def evaluateModel(model : LogisticRegressionModel,
