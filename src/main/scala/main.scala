@@ -19,7 +19,7 @@ class SparkSetup(
     println("==== host " + host)
     new SparkConf()
     .setAppName("ML Playground")
-    .setMaster(host)
+    //.setMaster(host)
   }
   //.set("spark.executor.memory", "30g")
   //.set("spark.executor-memory", "30g")
@@ -36,11 +36,37 @@ class SparkSetup(
   }
 }
 
-object Main {
+object Explore {
+  def main(args: Array[String]) = {
+    Logger.getRootLogger().setLevel(Level.ERROR)
+    val host = "local[*]"
+    //val host = "spark://10.1.2.244:7077"
 
-  private def setup = {
+    val sc = new SparkSetup(host).sc
+    sc.setLogLevel("ERROR")
+    //val preparedData : RDD[LabeledPoint] = KDD.prepareData(sc)
+    val preparedData : RDD[LabeledPoint] = KDD.cachedModelData(sc)
 
+    val splits = preparedData
+      .randomSplit(Array(0.8, 0.2), seed = 11L)
+    val training = splits(0).cache()
+    val test = splits(1).cache()
+
+    println("===== Explore Mode =====")
+
+    //val svmSummary = SVM.exploreTraining(training, test) sortBy (_.wPrecision)
+    //println("=== Worst Model: " + svmSummary.head)
+    //println("=== Best Model: "  + svmSummary.last)
+
+    val logSummary = LogisticRegression.exploreTraining(training, test) sortBy (_.wPrecision)
+    println("=== Worst Model: " + logSummary.head)
+    println("=== Best Model: "  + logSummary.last)
+
+    sc.stop()
   }
+}
+
+object Main {
 
   def mainOLD(args: Array[String]) = {
     Logger.getRootLogger().setLevel(Level.WARN)
@@ -49,8 +75,8 @@ object Main {
 
     val sc = new SparkSetup(host).sc
     sc.setLogLevel("ERROR")
-    val preparedData : RDD[LabeledPoint] = KDD.prepareData(sc)
-    //val preparedData : String = KDD.prepareData(sc)
+    //val preparedData : RDD[LabeledPoint] = KDD.prepareData(sc)
+    val preparedData : RDD[LabeledPoint] = KDD.cachedModelData(sc)
 
     val splits = preparedData
       .randomSplit(Array(0.8, 0.2), seed = 11L)
@@ -72,49 +98,5 @@ object Main {
     //modelPerformance(evaluation)
 
     sc.stop()
-  }
-
-  def main(args: Array[String]) = {
-    Logger.getRootLogger().setLevel(Level.WARN)
-    val host = "local[6]"
-    //val host = "spark://10.1.2.244:7077"
-
-    val sc = new SparkSetup(host).sc
-    sc.setLogLevel("ERROR")
-    val preparedData : RDD[LabeledPoint] = KDD.prepareData(sc)
-    //val preparedData : String = KDD.prepareData(sc)
-
-    val splits = preparedData
-      .randomSplit(Array(0.8, 0.2), seed = 11L)
-    val training = splits(0).cache()
-    val test = splits(1).cache()
-
-    println("===== Explore Mode =====")
-
-    //val svmSummary = SVM.exploreTraining(training, test) sortBy (_.wPrecision)
-    //println("=== Worst Model: " + svmSummary.head)
-    //println("=== Best Model: "  + svmSummary.last)
-
-    val logSummary = LogisticRegression.exploreTraining(training, test) sortBy (_.wPrecision)
-    println("=== Worst Model: " + logSummary.head)
-    println("=== Best Model: "  + logSummary.last)
-
-    sc.stop()
-
-  }
-
-  def modelPerformance(predictionAndLabels: org.apache.spark.rdd.RDD[(Double, Double)]) = {
-    val multMetrics = new MulticlassMetrics(predictionAndLabels)
-    multMetrics
-  }
-
-  def printModelPerformance(metrics: MulticlassMetrics) = {
-    println(metrics.confusionMatrix)
-    metrics.labels.foreach(label =>
-      println(s"[Model Perf] $label precision:  ${metrics.precision(label)}")
-    )
-
-    println(s"[Model Perf] weighted precision: ${metrics.weightedPrecision}")
-    metrics
   }
 }

@@ -5,7 +5,7 @@ settings(
   scalaVersion := "2.11.7",
   mainClass := Some("Main"),
 
-   libraryDependencies += "org.apache.spark" %% "spark-core" % "1.5.2",
+   libraryDependencies += "org.apache.spark" %% "spark-core" % "1.5.2" ,
    libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.5.2",
    libraryDependencies += "com.databricks" %% "spark-csv" % "1.3.0"
 )

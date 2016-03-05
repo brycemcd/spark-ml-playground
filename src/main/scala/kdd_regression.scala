@@ -9,6 +9,7 @@ import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
 
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
+import com.databricks.spark.csv
 
 
 object KDD {
@@ -22,10 +23,10 @@ object KDD {
       //.load("hdfs://spark3.thedevranch.net/classifications-datasets/kddcup.data")
 
     val mappers: List[(String, String)] = List(
-      "C1" -> "transportProtoIndex",
-      "C2" -> "protoIndex",
-      "C3" -> "idunnoIndex",
-      "C41" -> "outcome"
+      ("C1" , "transportProtoIndex"),
+      ("C2" , "protoIndex"),
+      ("C3" , "idunnoIndex"),
+      ("C41" , "outcome")
      )
 
    var mutDataFrame : DataFrame = df
@@ -85,6 +86,15 @@ object KDD {
    //modelData.show()
 
    //NOTE: if the select statement from creating this df changes, update `rowToLabeledPoint`
+    modelData.write.parquet("hdfs://spark3.thedevranch.net/ml-models/kdd.modelData")
+    modelData
+     .map(row => transformRowToLabeledPoint(row) )
+  }
+
+  def cachedModelData(sc : SparkContext) = {
+    val sqlContext = new SQLContext(sc)
+
+    val modelData = sqlContext.read.parquet("hdfs://spark3.thedevranch.net/ml-models/kdd.modelData")
     modelData
      .map(row => transformRowToLabeledPoint(row) )
   }

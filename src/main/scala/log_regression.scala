@@ -35,8 +35,10 @@ object LogisticRegression extends Model[
   }
 
   private def generateModelParams : Seq[SVMModelParams] = {
-    for(regParam <- (0.00001 to 0.0001 by 0.00005);
-      numIterations <- (100 to 500 by 100) ) yield SVMModelParams(regParam, numIterations)
+    //for(regParam <- (0.00001 to 1.00 by 0.0005);
+      //numIterations <- (100 to 3000 by 300) ) yield SVMModelParams(regParam, numIterations)
+    for(regParam <- (0.00001 to 0.0001 by 0.0005);
+      numIterations <- (100 to 200 by 100) ) yield SVMModelParams(regParam, numIterations)
   }
 
   def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
@@ -53,6 +55,7 @@ object LogisticRegression extends Model[
 
       val metrics = this.evaluateModel(model, testData)
 
+      println(modelParam.regParam + "," + modelParam.numIterations + "," + metrics.weightedRecall + "," + metrics.weightedPrecision)
       Perf[SVMModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
     }
   }
