@@ -21,6 +21,7 @@ abstract class KDD extends DataSource {
 }
 
 object KDD extends DataSource {
+  val uniqueModelName: String = "kdd"
 
   def prepareData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)

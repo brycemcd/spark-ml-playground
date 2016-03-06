@@ -13,6 +13,8 @@ import org.apache.spark.rdd.RDD
 
 case class LRModelParams(numClasses: Int) extends ModelParams
 
+abstract class LogisticRegression {}
+
 object LogisticRegression extends Model[
   LogisticRegressionModel,
   SVMModelParams
@@ -75,14 +77,6 @@ object LogisticRegression extends Model[
         .run(trainingData)
 
       model.save(sc, s"hdfs://spark3.thedevranch.net/ml-models/$name")
-  }
-
-  def predict(sc: SparkContext,
-              name: String,
-              features: Vector) = {
-
-    val model = LogisticRegressionModel.load(sc, s"hdfs://spark3.thedevranch.net/ml-models/$name")
-    model.predict(features)
   }
 
   def evaluateModel(model : LogisticRegressionModel,
