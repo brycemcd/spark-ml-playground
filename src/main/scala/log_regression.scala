@@ -9,6 +9,7 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.rdd.RDD
 
 case class LRModelParams(numClasses: Int) extends ModelParams
 
@@ -17,7 +18,7 @@ object LogisticRegression extends Model[
   SVMModelParams
 ] {
 
-  def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
+  def train(trainingData: RDD[LabeledPoint],
             modelParams : SVMModelParams) : LogisticRegressionModel = {
     //new LogisticRegressionWithSGD()
     buildModel(modelParams)
@@ -45,8 +46,8 @@ object LogisticRegression extends Model[
       numIterations <- (100 to 200 by 100) ) yield SVMModelParams(regParam, numIterations)
   }
 
-  def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[SVMModelParams]] = {
+  def exploreTraining(trainingData: RDD[LabeledPoint],
+                      testData: RDD[LabeledPoint]) : Seq[Perf[SVMModelParams]] = {
 
     // FIXME: this `count` op reduces the time this method executes from
     // > 7 minutes to ~30 s
@@ -67,7 +68,7 @@ object LogisticRegression extends Model[
   def persistModel(sc: SparkContext,
                   name: String,
                   modelParam: SVMModelParams,
-                  trainingData: org.apache.spark.rdd.RDD[LabeledPoint]) = {
+                  trainingData: RDD[LabeledPoint]) = {
 
       trainingData.count
       val model = buildModel( modelParam )
@@ -85,7 +86,7 @@ object LogisticRegression extends Model[
   }
 
   def evaluateModel(model : LogisticRegressionModel,
-                    data : org.apache.spark.rdd.RDD[LabeledPoint]) = {
+                    data : RDD[LabeledPoint]) = {
 
     val predictionAndLabels = data.map { case LabeledPoint(label, features) =>
       val prediction = model.predict(features)

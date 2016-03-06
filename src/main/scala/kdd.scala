@@ -10,9 +10,17 @@ import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import com.databricks.spark.csv
+import org.apache.spark.rdd.RDD
 
+trait DataSource {
+  def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
+}
 
-object KDD {
+abstract class KDD extends DataSource {
+
+}
+
+object KDD extends DataSource {
 
   def prepareData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)

@@ -7,27 +7,24 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import scala.reflect.ClassTag
 
 import org.apache.spark.mllib.regression.GeneralizedLinearModel
+import org.apache.spark.rdd.RDD
 
 abstract class ModelParams
 
-/*
-* M = Linear model generalization 
-*/
 trait Model[
   M <: GeneralizedLinearModel,
   P <: ModelParams
   ] {
-  def train(trainingData: org.apache.spark.rdd.RDD[LabeledPoint], modelParams: P) : M
+  def train(trainingData: RDD[LabeledPoint], modelParams: P) : M
 
   def evaluateModel(model : M,
-                    data : org.apache.spark.rdd.RDD[LabeledPoint]) : MulticlassMetrics
+                    data :RDD[LabeledPoint]) : MulticlassMetrics
 
-  //def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      //testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[P]]
-  def exploreTraining(trainingData: org.apache.spark.rdd.RDD[LabeledPoint],
-                      testData: org.apache.spark.rdd.RDD[LabeledPoint]) : Seq[Perf[P]]
+  def exploreTraining(trainingData:RDD[LabeledPoint],
+                      testData: RDD[LabeledPoint]) : Seq[Perf[P]]
 
   // TODO: add predict method
 }
 
+// TODO: Really need to get this P out of here. It affects Model + Explore
 case class Perf[P <: ModelParams](modelParams : P, wRecall: Double, wPrecision: Double)
