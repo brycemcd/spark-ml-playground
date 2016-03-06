@@ -19,7 +19,7 @@ class SparkSetup(
     println("==== host " + host)
     new SparkConf()
     .setAppName("ML Playground")
-    //.setMaster(host)
+    .setMaster(host)
   }
   //.set("spark.executor.memory", "30g")
   //.set("spark.executor-memory", "30g")
@@ -33,6 +33,52 @@ class SparkSetup(
     val s = new SparkContext(conf)
     Logger.getRootLogger().setLevel(Level.ERROR)
     s
+  }
+}
+
+object Predict {
+  def main(args: Array[String]) = {
+    val host = "local[*]"
+    val sc = new SparkSetup(host).sc
+    val preparedData : RDD[LabeledPoint] = KDD.cachedModelData(sc)
+
+
+    for(i <- (0 to 10)) {
+      val dataPoint = preparedData.takeSample(false, 1)(0)
+      val prediction = LogisticRegression.predict(sc,
+                                            "kdd-logisticregression",
+                                            dataPoint.features)
+
+      //println("data: "+ dataPoint )
+      println("---")
+      println("prediction: " + prediction)
+      println("label: " + dataPoint.label)
+      (dataPoint.label.toString == prediction.toString)
+    } //.map { result => println(result) }
+
+    sc.stop()
+  }
+}
+
+object PersistModel {
+
+  def main(args: Array[String]) = {
+    val host = "local[*]"
+    //val host = "spark://10.1.2.244:7077"
+    val sc = new SparkSetup(host).sc
+    val preparedData : RDD[LabeledPoint] = KDD.cachedModelData(sc)
+
+    val splits = preparedData
+      .randomSplit(Array(0.8, 0.2), seed = 11L)
+
+    val training = splits(0).cache()
+
+    val modelParams = SVMModelParams(1, 10)
+    val model = LogisticRegression.persistModel(sc, "kdd-logisticregression", modelParams, training)
+
+    println("HELLO WORLD" + model)
+
+    sc.stop()
   }
 }
 
@@ -58,9 +104,9 @@ object Explore {
     //println("=== Worst Model: " + svmSummary.head)
     //println("=== Best Model: "  + svmSummary.last)
 
-    val logSummary = LogisticRegression.exploreTraining(training, test) sortBy (_.wPrecision)
-    println("=== Worst Model: " + logSummary.head)
-    println("=== Best Model: "  + logSummary.last)
+    //val logSummary = LogisticRegression.exploreTraining(training, test) sortBy (_.wPrecision)
+    //println("=== Worst Model: " + logSummary.head)
+    //println("=== Best Model: "  + logSummary.last)
 
     sc.stop()
   }

@@ -6,6 +6,10 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.mllib.linalg.Vector
+
 case class LRModelParams(numClasses: Int) extends ModelParams
 
 object LogisticRegression extends Model[
@@ -58,6 +62,26 @@ object LogisticRegression extends Model[
       println(modelParam.regParam + "," + modelParam.numIterations + "," + metrics.weightedRecall + "," + metrics.weightedPrecision)
       Perf[SVMModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
     }
+  }
+
+  def persistModel(sc: SparkContext,
+                  name: String,
+                  modelParam: SVMModelParams,
+                  trainingData: org.apache.spark.rdd.RDD[LabeledPoint]) = {
+
+      trainingData.count
+      val model = buildModel( modelParam )
+        .run(trainingData)
+
+      model.save(sc, s"hdfs://spark3.thedevranch.net/ml-models/$name")
+  }
+
+  def predict(sc: SparkContext,
+              name: String,
+              features: Vector) = {
+
+    val model = LogisticRegressionModel.load(sc, s"hdfs://spark3.thedevranch.net/ml-models/$name")
+    model.predict(features)
   }
 
   def evaluateModel(model : LogisticRegressionModel,

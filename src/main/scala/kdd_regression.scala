@@ -86,7 +86,7 @@ object KDD {
    //modelData.show()
 
    //NOTE: if the select statement from creating this df changes, update `rowToLabeledPoint`
-    modelData.write.parquet("hdfs://spark3.thedevranch.net/ml-models/kdd.modelData")
+    modelData.write.parquet("hdfs://spark3.thedevranch.net/ml-data/kdd.modelData")
     modelData
      .map(row => transformRowToLabeledPoint(row) )
   }
@@ -94,7 +94,7 @@ object KDD {
   def cachedModelData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)
 
-    val modelData = sqlContext.read.parquet("hdfs://spark3.thedevranch.net/ml-models/kdd.modelData")
+    val modelData = sqlContext.read.parquet("hdfs://spark3.thedevranch.net/ml-data/kdd.modelData")
     modelData
      .map(row => transformRowToLabeledPoint(row) )
   }
