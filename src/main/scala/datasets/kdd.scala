@@ -1,3 +1,4 @@
+//TODO: learn how to namespace
 package spark_ml_playground
 
 import org.apache.spark.SparkContext
@@ -12,18 +13,20 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import com.databricks.spark.csv
 import org.apache.spark.rdd.RDD
 
-trait DataSource {
+trait DataSet {
+  val uniqueDataCacheName: String
+
   def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
+  def prepareRawData(sc: SparkContext) : RDD[LabeledPoint]
 }
 
-abstract class KDD extends DataSource {
+abstract class KDD extends DataSet {}
 
-}
+object KDD extends DataSet {
+  val uniqueDataCacheName: String = "kdd"
+  private val dataSetStoragePath = "hdfs://spark3.thedevranch.net/ml-data/"+uniqueDataCacheName +".modelData"
 
-object KDD extends DataSource {
-  val uniqueModelName: String = "kdd"
-
-  def prepareData(sc : SparkContext) = {
+  def prepareRawData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)
     val df = sqlContext.read
       .format("com.databricks.spark.csv")
@@ -95,7 +98,7 @@ object KDD extends DataSource {
    //modelData.show()
 
    //NOTE: if the select statement from creating this df changes, update `rowToLabeledPoint`
-    modelData.write.parquet("hdfs://spark3.thedevranch.net/ml-data/kdd.modelData")
+    modelData.write.parquet(dataSetStoragePath)
     modelData
      .map(row => transformRowToLabeledPoint(row) )
   }
@@ -103,12 +106,12 @@ object KDD extends DataSource {
   def cachedModelData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)
 
-    val modelData = sqlContext.read.parquet("hdfs://spark3.thedevranch.net/ml-data/kdd.modelData")
+    val modelData = sqlContext.read.parquet(dataSetStoragePath)
     modelData
      .map(row => transformRowToLabeledPoint(row) )
   }
 
-  def transformRowToLabeledPoint(row: Row) = LabeledPoint(row.getDouble(0),
+  private def transformRowToLabeledPoint(row: Row) = LabeledPoint(row.getDouble(0),
     Vectors.dense(
       row.getDouble(1),
       row.getDouble(2),
