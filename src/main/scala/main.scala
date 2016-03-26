@@ -21,6 +21,7 @@ object Main {
     // necessary for a data model
     println("===== Explore Mode =====")
     //val allModelParams = KddLogisticRegression.exploreTrainingResults
+    val allModelParams = KddLogisticRegression.everythingInOne
 
     println("===== Persist Best Model =====")
     //val bestModelParams = allModelParams.last.modelParams
@@ -31,17 +32,17 @@ object Main {
     //val bestModel = KddLogisticRegression.train(bestModelParams)
 
     println("===== Load Persisted Model =====")
-    val bestModel = KddLogisticRegression.loadPersistedModel
+    //val bestModel = KddLogisticRegression.loadPersistedModel
 
-    println("===== Predict  =====")
-    for(i <- (0 to 10)) {
-      val dataPoint = KddLogisticRegression.testSet.takeSample(false, 1)(0)
-      val prediction = KddLogisticRegression.predict(dataPoint.features)
-      println("---")
-      println("prediction: " + prediction.toString)
-      println("label: " + dataPoint.label)
-      (dataPoint.label.toString == prediction.toString)
-    }
+    //println("===== Predict  =====")
+    //for(i <- (0 to 10)) {
+      //val dataPoint = KddLogisticRegression.testSet.takeSample(false, 1)(0)
+      //val prediction = KddLogisticRegression.predict(dataPoint.features)
+      //println("---")
+      //println("prediction: " + prediction.toString)
+      //println("label: " + dataPoint.label)
+      //(dataPoint.label.toString == prediction.toString)
+    //}
     println("===== Done =====")
     KddLogisticRegression.sc.stop()
   }

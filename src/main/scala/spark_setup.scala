@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
 class SparkSetup(
-  val host : String = "local[4]"
+  val host : String = "local[*]"
 ) {
   val conf = {
     println("==== host " + host)

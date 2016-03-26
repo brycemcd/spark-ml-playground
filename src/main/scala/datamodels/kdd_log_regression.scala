@@ -1,5 +1,7 @@
 package spark_ml_playground
 
+import java.util.Calendar
+
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, LogisticRegressionModel, LogisticRegressionWithSGD}
@@ -21,41 +23,121 @@ object KddLogisticRegression extends DataModel[
 
   def allData = KDD.cachedModelData(sc)
 
-  def train(modelParams : SGDModelParams) : LogisticRegressionModel = {
+  def train(modelParams : SGDModelParams, trainingData: RDD[LabeledPoint]) : LogisticRegressionModel = {
     var model = new LogisticRegressionWithSGD()
       model.optimizer.
       setNumIterations(modelParams.numIterations).
       setRegParam(modelParams.regParam)
-    model.run(trainingSet)
+    model.run(trainingData)
   }
 
-  private def generateModelParams : Seq[SGDModelParams] = {
+  private def generateModelParams = {
     //for(regParam <- (0.00001 to 1.00 by 0.0005);
       //numIterations <- (100 to 3000 by 300) ) yield SGDModelParams(regParam, numIterations)
     for(regParam <- (0.00001 to 0.0001 by 0.0005);
-      numIterations <- (100 to 200 by 100) ) yield SGDModelParams(regParam, numIterations)
+      numIterations <- (10 to 20 by 5) ) yield SGDModelParams(regParam, numIterations)
   }
 
   def exploreTraining(trainingData: RDD[LabeledPoint],
-                      testData: RDD[LabeledPoint]) : Seq[Perf[SGDModelParams]] = {
+                      testData: RDD[LabeledPoint],
+                      modelParams: RDD[SGDModelParams]) = {
 
-    generateModelParams.map { modelParam =>
+    modelParams.map { modelParam =>
 
-      val model = this.train(modelParam)
-      val metrics = this.evaluateModel(model, testData)
+      println("about to train")
+      var model = new LogisticRegressionWithSGD()
+        model.optimizer.
+        setNumIterations(modelParam.numIterations).
+        setRegParam(modelParam.regParam)
+      model.run(trainingSet)
+      //val model = train(modelParam)
+      //val metrics = evaluateModel(model, testData)
 
       //FIXME: this is for debugging
-      println(modelParam.regParam + "," + modelParam.numIterations + "," + metrics.weightedRecall + "," + metrics.weightedPrecision)
-      Perf[SGDModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
+      //println(modelParam.regParam + "," + modelParam.numIterations + "," + metrics.weightedRecall + "," + metrics.weightedPrecision)
+      //Perf[SGDModelParams](modelParam, metrics.weightedRecall, metrics.weightedPrecision)
+      Perf[SGDModelParams](modelParam, 0.1, 0.2)
     }
   }
 
-  def exploreTrainingResults = {
-    val logSummary = exploreTraining(trainingSet, testSet) sortBy (_.wPrecision)
+  def everythingInOne = {
+    // NOTE: this needs to be brought into a local variable or else the
+    // training step completely hangs
+    val trs_ = trainingSet
+    val tes_ = testSet
+    // required?!?
+    trs_.count
+    tes_.count
 
-    println("=== Worst Model: " + logSummary.head)
-    println("=== Best Model: "  + logSummary.last)
-    logSummary
+    val bcts = sc.broadcast(trs_).value.cache()
+    val bcss = sc.broadcast(tes_).value.cache()
+
+    // 1. Generate model params
+    // 2. Develop models on each param set
+    generateModelParams.par.map { modelP =>
+      val model = train(modelP, bcts)
+      (modelP, model)
+    }.map { case(modelP, model) =>
+      // 3. test model
+      val predictionLabel = bcss.map {
+          case LabeledPoint(label, features) =>
+            val prediction = predict(features, model)
+            (prediction, label)
+      }
+      (predictionLabel, modelP)
+    }.map { case(modelPredictions, modelP) =>
+      // 4. Collect model evaluation metrics
+      val metrics = new MulticlassMetrics(modelPredictions)
+
+      Perf[SGDModelParams](modelP, metrics.weightedRecall, metrics.weightedPrecision)
+    }.foreach(println)
+  }
+
+  def exploreTrainingResults = {
+    val modelP = generateModelParams
+    val ts_ = sc.broadcast( trainingSet )
+    //ts_.cache()
+    println("ts_ " + ts_.value.count)
+    val tes = testSet.cache()
+
+    // 1. get all model params
+    // 2. return RDD of models
+    val conModels = modelP.map { modelParam =>
+      println("building model")
+      LogisticRegressionWithSGD.train(ts_.value, 20)
+      //val model = new LogisticRegressionWithSGD()
+        //model.optimizer.
+        //setNumIterations(modelParam.numIterations).
+        //setRegParam(modelParam.regParam)
+      //model.run(ts_)
+    }
+    // 3. use test set for evaluation
+    val testResults = conModels.map { model =>
+      println("testing model")
+      val predictionAndLabels = testSet.map { case LabeledPoint(label, features) =>
+        val prediction = predict(features, model)
+        (prediction, label)
+      }
+      val metrics = new MulticlassMetrics(predictionAndLabels)
+      (model, metrics.weightedRecall, metrics.weightedPrecision)
+    }
+
+
+    conModels.foreach(println)
+    //val logSummary = exploreTraining(ts, tes, modelP)
+    //logSummary.collect
+    //val summary = logSummary sortBy (_.wPrecision)
+    //var s : String = ""
+    //val f = logSummary.map{ res =>
+      //s += res.toString + "\n"
+      //println(s)
+    //}
+    //logSummary.saveAsTextFile("hdfs://spark3.thedevranch.net/model_results/results-" + Calendar.getInstance().getTimeInMillis)
+    //sc.parallelize(logSummary).saveAsTextFile("hdfs://spark3.thedevranch.net/model_results/results.txt")
+
+    //println("=== Worst Model: " + summary.head)
+    //println("=== Best Model: "  + summary.last)
+    //logSummary
   }
 
   def persistModel(model: LogisticRegressionModel) = {

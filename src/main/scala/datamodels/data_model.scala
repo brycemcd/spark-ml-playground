@@ -37,13 +37,13 @@ trait DataModel[
     val training = splits(0).cache()
     // FIXME: this `count` op reduces the time this method executes from
     // > 7 minutes to ~30 s
-    training.count
+    //training.count
     training
   }
   def testSet : RDD[LabeledPoint] = splits(1).cache()
 
 
-  def train(modelParams: P) : M
+  //def train(modelParams: P) : M
 
   def evaluateModel(model : M,
                     data :RDD[LabeledPoint]) : MulticlassMetrics
@@ -55,8 +55,8 @@ trait DataModel[
 
   // NOTE: use this to test out a bunch of different training parameters
   // and return a list of the parameters with performance metrics
-  def exploreTraining(trainingData:RDD[LabeledPoint],
-                      testData: RDD[LabeledPoint]) : Seq[Perf[P]]
+  //def exploreTraining(trainingData:RDD[LabeledPoint],
+                      //testData: RDD[LabeledPoint]) : Seq[Perf[P]]
 
-  def exploreTrainingResults : Seq[Perf[P]]
+  //def exploreTrainingResults : Seq[Perf[P]]
 }
