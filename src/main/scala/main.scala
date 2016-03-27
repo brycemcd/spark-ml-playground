@@ -14,14 +14,15 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
 
 object Main {
-  def main(args: Array[String]) = {
+  def mainRun(args: Array[String]) = {
     //implicit val sc : SparkContext = new SparkSetup().sc
-    //lazy val sc : SparkContext = new SparkSetup().sc
+    lazy val sc : SparkContext = new SparkSetup().sc
     // NOTE: this is a sanity check that I've implmented all the methods
     // necessary for a data model
     println("===== Explore Mode =====")
     //val allModelParams = KddLogisticRegression.exploreTrainingResults
-    val allModelParams = KddLogisticRegression.everythingInOne
+
+    val allModelParams = KddLogisticRegression.everythingInOne(sc)
 
     println("===== Persist Best Model =====")
     //val bestModelParams = allModelParams.last.modelParams
@@ -44,6 +45,13 @@ object Main {
       //(dataPoint.label.toString == prediction.toString)
     //}
     println("===== Done =====")
-    KddLogisticRegression.sc.stop()
+    sc.stop()
+    //KddLogisticRegression.sc.stop()
+  }
+
+  def main(args: Array[String]) = {
+    val conf = new SparkConf().setAppName("From Spark Submit")
+    val sc = new SparkContext(conf)
+    val allModelParams = KddLogisticRegression.everythingInOne(sc)
   }
 }

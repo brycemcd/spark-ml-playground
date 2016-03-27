@@ -22,25 +22,24 @@ trait DataModel[
   M <: GeneralizedLinearModel,
   P <: ModelParams
 ] {
-  lazy val sc : SparkContext = new SparkSetup().sc
   // TODO: make this a random # or remove it completely
   lazy val seedVal : Long = 11L
   lazy val trainingSetRatio : Double = 0.8
   lazy val testSetRatio : Double = 1.0 - trainingSetRatio
-  lazy val bestModel : M = loadPersistedModel
+  //lazy val bestModel : M = loadPersistedModel
 
   val persistedModelName : String
 
-  def allData : RDD[LabeledPoint]
-  def splits = allData.randomSplit(Array(trainingSetRatio, testSetRatio), seed = seedVal)
-  def trainingSet : RDD[LabeledPoint] ={
-    val training = splits(0).cache()
+  def allData(sc : SparkContext) : RDD[LabeledPoint]
+  def splits(sc : SparkContext) = allData(sc).randomSplit(Array(trainingSetRatio, testSetRatio), seed = seedVal)
+  def trainingSet(sc : SparkContext) : RDD[LabeledPoint] ={
+    val training = splits(sc)(0).cache()
     // FIXME: this `count` op reduces the time this method executes from
     // > 7 minutes to ~30 s
     //training.count
     training
   }
-  def testSet : RDD[LabeledPoint] = splits(1).cache()
+  def testSet(sc : SparkContext) : RDD[LabeledPoint] = splits(sc)(1).cache()
 
 
   //def train(modelParams: P) : M
@@ -48,8 +47,8 @@ trait DataModel[
   def evaluateModel(model : M,
                     data :RDD[LabeledPoint]) : MulticlassMetrics
 
-  def persistModel(model: M)
-  def loadPersistedModel : M
+  def persistModel(sc : SparkContext, model: M)
+  def loadPersistedModel(sc : SparkContext) : M
 
   def predict(features: Vector, model: M) : Double
 
