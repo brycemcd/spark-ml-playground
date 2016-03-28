@@ -22,3 +22,15 @@ explore. Once a model has been optimized, it can be persisted to HDFS
 In the future a module or companion project should be created to service
 and API layer to the model wherein a web service can pass in unlabeled
 features and return a prediction.
+
+Run with spark-submit by invoking:
+
+```bash
+
+./lib/spark-1.5.2-bin-hadoop2.6/bin/spark-submit \
+--master spark://10.1.2.244:7077 \
+--executor-memory 5G \
+--class spark_ml_playground.KddAllModelsRoutine \
+target/scala-2.11/ml-playground_2.11-0.0.1.jar
+
+```

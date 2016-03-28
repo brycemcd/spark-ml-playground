@@ -6,24 +6,31 @@ import org.apache.spark.SparkContext._
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
-import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.rdd.RDD
 
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import org.apache.spark.mllib.evaluation.MulticlassMetrics
+//object KddLogRegressionRoutine {
+  //def main(args: Array[String]) = {
+    //val conf = new SparkConf().setAppName("KDDLogRegressionRoutine")
+    //val sc = new SparkContext(conf)
+    //val allModelParams = KddLogisticRegression.exploreTraining(sc,
+      //KddLogisticRegression.minGenerateModelParams)
+  //}
+//}
 
+//object KddSVMRoutine{
+  //def main(args: Array[String]) = {
+    //val conf = new SparkConf().setAppName("KDDLogRegressionRoutine")
+    //val sc = new SparkContext(conf)
+    //val allModelParams = KddSVM.exploreTraining(sc,
+      //KddSVM.minGenerateModelParams)
+  //}
+//}
 
-object Main {
+object KddAllModelsRoutine{
   def main(args: Array[String]) = {
-    //implicit val sc : SparkContext = new SparkSetup().sc
-    lazy val sc : SparkContext = new SparkSetup().sc
-    // NOTE: this is a sanity check that I've implmented all the methods
-    // necessary for a data model
-    println("===== Explore Mode =====")
-    //val allModelParams = KddLogisticRegression.exploreTrainingResults
+    val conf = new SparkConf().setAppName("KDDAllModelsRoutine")
+    val sc = new SparkContext(conf)
 
-    val minParams = KddLogisticRegression.minGenerateModelParams
-
+    val minParams = KddLogisticRegression.maxGenerateModelParams
     // training step completely hangs
     val trs_ = KddLogisticRegression.trainingSet(sc)
     val tes_ = KddLogisticRegression.testSet(sc)
@@ -42,8 +49,5 @@ object Main {
 
     val svmResults = KddSVM.exploreTraining(sc, minParams, bcts, bcss)
     KddSVM.persistExploratoryResults(svmResults)
-
-    println("===== Done =====")
-    sc.stop()
   }
 }
