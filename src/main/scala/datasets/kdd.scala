@@ -16,8 +16,8 @@ import org.apache.spark.rdd.RDD
 trait DataSet {
   val uniqueDataCacheName: String
 
-  def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
-  def prepareRawData(sc: SparkContext) : RDD[LabeledPoint]
+  //def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
+  //def prepareRawData(sc: SparkContext) : RDD[LabeledPoint]
 }
 
 abstract class KDD extends DataSet {}
