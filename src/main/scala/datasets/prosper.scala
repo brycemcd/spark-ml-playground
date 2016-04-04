@@ -9,9 +9,12 @@ import org.apache.spark.sql.Row
 import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
 
 import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.SparseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import com.databricks.spark.csv
 import org.apache.spark.rdd.RDD
+
+import org.apache.spark.ml.feature.VectorAssembler
 
 object Prosper extends DataSet {
   val uniqueDataCacheName = "prosper"
@@ -95,7 +98,27 @@ object Prosper extends DataSet {
     val encoder = new OneHotEncoder()
       .setInputCol("prosper_rating_ind")
       .setOutputCol("prosper_rating_enc")
-      encoder.transform(indexed).where("prosper_rating != 'N/A'").show()
+    val encodedData =  encoder.transform(indexed)
+
+    val assembler = new VectorAssembler()
+      .setInputCols(Array("amount_borrowed", "prosper_rating_enc"))
+      .setOutputCol("features")
+    val assembeled = assembler.transform(encodedData)
+
+    val finalModel = assembeled.select("success", "features")
+    finalModel.write.parquet(dataSetStoragePath)
+
+    finalModel.map { row =>
+      LabeledPoint(row.getDecimal(0).doubleValue(), row.getAs[SparseVector]("features"))
+    }
   }
 
+  def cachedModelData(sc : SparkContext) = {
+    val sqlContext = new SQLContext(sc)
+
+    val modelData = sqlContext.read.parquet(dataSetStoragePath)
+    modelData.map(row =>
+      LabeledPoint(row.getDecimal(0).doubleValue(), row.getAs[SparseVector]("features"))
+    )
+  }
 }
