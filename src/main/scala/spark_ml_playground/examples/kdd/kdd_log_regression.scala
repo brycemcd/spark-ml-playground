@@ -1,4 +1,8 @@
-package spark_ml_playground
+package spark_ml_playground.examples.kdd
+
+import spark_ml_playground.datasets._
+import spark_ml_playground.datamodels._
+import spark_ml_playground.modelparams._
 
 import java.util.Calendar
 

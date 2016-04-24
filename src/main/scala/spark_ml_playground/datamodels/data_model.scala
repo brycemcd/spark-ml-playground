@@ -1,5 +1,7 @@
-package spark_ml_playground
+package spark_ml_playground.datamodels
 
+import spark_ml_playground.datasets.DataSet
+import spark_ml_playground.modelparams._
 // FIXME: not all of these are needed
 import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}

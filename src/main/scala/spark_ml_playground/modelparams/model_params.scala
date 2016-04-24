@@ -1,4 +1,4 @@
-package spark_ml_playground
+package spark_ml_playground.modelparams
 
 trait ModelParams {
   def toCSV : String

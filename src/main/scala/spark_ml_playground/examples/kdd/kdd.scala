@@ -1,5 +1,8 @@
-//TODO: learn how to namespace
-package spark_ml_playground
+package spark_ml_playground.examples.kdd
+
+import spark_ml_playground.datasets._
+import spark_ml_playground.datamodels._
+import spark_ml_playground.modelparams._
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
@@ -12,15 +15,6 @@ import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import com.databricks.spark.csv
 import org.apache.spark.rdd.RDD
-
-trait DataSet {
-  val uniqueDataCacheName: String
-
-  //def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
-  //def prepareRawData(sc: SparkContext) : RDD[LabeledPoint]
-}
-
-abstract class KDD extends DataSet {}
 
 object KDD extends DataSet {
   val uniqueDataCacheName: String = "kdd"

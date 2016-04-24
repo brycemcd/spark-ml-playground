@@ -1,4 +1,8 @@
-package spark_ml_playground
+package spark_ml_playground.examples.kdd
+
+import spark_ml_playground.datasets._
+import spark_ml_playground.datamodels._
+import spark_ml_playground.modelparams._
 
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.SparkContext._
@@ -8,7 +12,7 @@ import org.apache.log4j.Level
 
 
 object KddLogRegressionRoutine {
-  def main(args: Array[String]) = {
+  def runRoutine(args: Array[String]) = {
     val conf = new SparkConf().setAppName("KDDLogRoutine")
     val sc = new SparkContext(conf)
 
@@ -32,7 +36,7 @@ object KddLogRegressionRoutine {
 }
 
 object KddSVMRoutine{
-  def main(args: Array[String]) = {
+  def runRoutine(args: Array[String]) = {
     val conf = new SparkConf().setAppName("KDDSVMRoutine")
     val sc = new SparkContext(conf)
 
@@ -56,7 +60,7 @@ object KddSVMRoutine{
 }
 
 object KddAllModelsRoutine{
-  def main(args: Array[String]) = {
+  def runRoutine(args: Array[String]) = {
     val conf = new SparkConf().setAppName("KDDAllModelsRoutine")
     val sc = new SparkContext(conf)
 

@@ -1,5 +1,8 @@
-//TODO: learn how to namespace
-package spark_ml_playground
+package spark_ml_playground.examples.prosper
+
+import spark_ml_playground._
+import spark_ml_playground.datasets._
+import spark_ml_playground.datamodels._
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
