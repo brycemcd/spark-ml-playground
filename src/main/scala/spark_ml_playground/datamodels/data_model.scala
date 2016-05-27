@@ -68,13 +68,16 @@ trait DataModel[
   def exploreTraining(sc : SparkContext,
                       modelParams: Seq[P],
                       trainingData: RDD[LabeledPoint],
-                      testData: RDD[LabeledPoint]) : RDD[Perf[P]] = {
+                      testData: RDD[LabeledPoint],
+                      train: (P, RDD[LabeledPoint]) => M
+                    ) : RDD[Perf[P]] = {
 
 
     // 1. Generate model params
     // 2. Develop models on each param set
     println("=== training "+ modelParams.length + " models")
-    val results = modelParams.par.map { modelP =>
+    //val results = modelParams.par.map { modelP =>
+    val results = modelParams.map { modelP =>
       val model = train(modelP, trainingData)
       (modelP, model)
     }.map { case(modelP, model) =>
@@ -85,7 +88,11 @@ trait DataModel[
       // 4. Collect model evaluation metrics
       val metrics = new MulticlassMetrics(modelPredictions)
 
-      Perf[P](modelP, metrics.weightedRecall, metrics.weightedPrecision)
+      println("---")
+      println(metrics.confusionMatrix)
+      println("---")
+
+      Perf[P](modelP, metrics.weightedRecall, metrics.weightedPrecision, metrics.recall)
     }.toList
 
     val rddResults = sc.parallelize(results)
@@ -93,12 +100,10 @@ trait DataModel[
   }
 
   // TODO: move this up into GLMModelDevelopment
-  def train(modelParams: P, trainingData: RDD[LabeledPoint]) : M
-
-
+  //def train(modelParams: P, trainingData: RDD[LabeledPoint]) : M
 
   // Model Use
   //lazy val bestModel : M = loadPersistedModel
-  def persistModel(sc : SparkContext, model: M)
-  def loadPersistedModel(sc : SparkContext) : M
+  //def persistModel(sc : SparkContext, model: M)
+  //def loadPersistedModel(sc : SparkContext) : M
 }

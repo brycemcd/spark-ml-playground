@@ -6,5 +6,3 @@ trait DataSet {
   //def cachedModelData(sc : SparkContext) : RDD[LabeledPoint]
   //def prepareRawData(sc: SparkContext) : RDD[LabeledPoint]
 }
-
-abstract class KDD extends DataSet {}

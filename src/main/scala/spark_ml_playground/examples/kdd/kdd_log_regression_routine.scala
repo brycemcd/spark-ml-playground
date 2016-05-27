@@ -30,8 +30,8 @@ object KddLogRegressionRoutine {
     bcts.count
     bcss.count
 
-    val logResults = KddLogisticRegression.exploreTraining(sc, minParams, bcts, bcss)
-    KddLogisticRegression.persistExploratoryResults(logResults)
+    //val logResults = KddLogisticRegression.exploreTraining(sc, minParams, bcts, bcss)
+    //KddLogisticRegression.persistExploratoryResults(logResults)
   }
 }
 
@@ -54,7 +54,7 @@ object KddSVMRoutine{
     bcts.count
     bcss.count
 
-    val svmResults = KddSVM.exploreTraining(sc, minParams, bcts, bcss)
+    val svmResults = KddSVM.exploreTraining(sc, minParams, bcts, bcss, KddSVM.train)
     KddSVM.persistExploratoryResults(svmResults)
   }
 }
@@ -78,10 +78,10 @@ object KddAllModelsRoutine{
     bcts.count
     bcss.count
 
-    val logResults = KddLogisticRegression.exploreTraining(sc, minParams, bcts, bcss)
-    KddLogisticRegression.persistExploratoryResults(logResults)
+    //val logResults = KddLogisticRegression.exploreTraining(sc, minParams, bcts, bcss)
+    //KddLogisticRegression.persistExploratoryResults(logResults)
 
-    val svmResults = KddSVM.exploreTraining(sc, minParams, bcts, bcss)
-    KddSVM.persistExploratoryResults(svmResults)
+    //val svmResults = KddSVM.exploreTraining(sc, minParams, bcts, bcss)
+    //KddSVM.persistExploratoryResults(svmResults)
   }
 }

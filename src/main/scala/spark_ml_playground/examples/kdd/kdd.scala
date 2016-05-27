@@ -16,6 +16,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import com.databricks.spark.csv
 import org.apache.spark.rdd.RDD
 
+abstract class KDD extends DataSet {}
 object KDD extends DataSet {
   val uniqueDataCacheName: String = "kdd"
   private val dataSetStoragePath = "hdfs://spark3.thedevranch.net/ml-data/"+uniqueDataCacheName +".modelData"

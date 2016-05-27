@@ -19,15 +19,10 @@ import org.apache.spark.rdd.RDD
 
 import org.apache.spark.ml.feature.VectorAssembler
 
-object Prosper extends DataSet {
+abstract class ProsperData extends DataSet {}
+object ProsperData extends DataSet {
   val uniqueDataCacheName = "prosper"
   private val dataSetStoragePath = "hdfs://spark3.thedevranch.net/ml-data/"+uniqueDataCacheName +".modelData"
-
-  def main(args: Array[String]) = {
-    lazy val sc : SparkContext = new SparkSetup().sc
-    prepareRawData(sc)
-    sc.stop()
-  }
 
   def prepareRawData(sc: SparkContext) = {
     val sqlContext = new SQLContext(sc)
@@ -79,7 +74,9 @@ object Prosper extends DataSet {
       , principal_paid + principal_balance as loan_amt
       FROM prosper_loans
       WHERE loan_status_description IN ('CHARGEOFF', 'DEFAULTED', 'COMPLETED')
+        AND prosper_rating != 'N/A'
       """)
+        //AND prosper_rating != 'N/A'
 
 
 
@@ -104,12 +101,12 @@ object Prosper extends DataSet {
     val encodedData =  encoder.transform(indexed)
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("amount_borrowed", "prosper_rating_enc"))
+      .setInputCols(Array("prosper_rating_enc"))
       .setOutputCol("features")
     val assembeled = assembler.transform(encodedData)
 
     val finalModel = assembeled.select("success", "features")
-    finalModel.write.parquet(dataSetStoragePath)
+    //finalModel.write.parquet(dataSetStoragePath)
 
     finalModel.map { row =>
       LabeledPoint(row.getDecimal(0).doubleValue(), row.getAs[SparseVector]("features"))
@@ -119,9 +116,10 @@ object Prosper extends DataSet {
   def cachedModelData(sc : SparkContext) = {
     val sqlContext = new SQLContext(sc)
 
-    val modelData = sqlContext.read.parquet(dataSetStoragePath)
-    modelData.map(row =>
-      LabeledPoint(row.getDecimal(0).doubleValue(), row.getAs[SparseVector]("features"))
-    )
+    //val modelData = sqlContext.read.parquet(dataSetStoragePath)
+    //modelData.map(row =>
+      //LabeledPoint(row.getDecimal(0).doubleValue(), row.getAs[SparseVector]("features"))
+    //)
+   prepareRawData(sc)
   }
 }
